@@ -1,0 +1,260 @@
+register
+<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
+<div class="container">
+	<div class="row">
+		<div class="col-md-12">
+			<div class="page-header">
+				<h1>Thank you for registering your new account!</h1>
+			</div>
+			<p>You have successfully register. Please check your email inbox to confirm your email address.</p>
+		</div>
+	</div><!-- .row -->
+</div><!-- .container -->
+
+
+register.php
+
+
+<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
+<div class="container">
+	<div class="row">
+		<?php if (validation_errors()) : ?>
+			<div class="col-md-12">
+				<div class="alert alert-danger" role="alert">
+					<?= validation_errors() ?>
+				</div>
+			</div>
+		<?php endif; ?>
+		<?php if (isset($error)) : ?>
+			<div class="col-md-12">
+				<div class="alert alert-danger" role="alert">
+					<?= $error ?>
+				</div>
+			</div>
+		<?php endif; ?>
+		<div class="col-md-12">
+			<div class="page-header">
+				<h1>Register</h1>
+			</div>
+			<?= form_open() ?>
+				<div class="form-group">
+					<label for="username">Username</label>
+					<input type="text" class="form-control" id="username" name="username" placeholder="Enter a username">
+					<p class="help-block">At least 4 characters, letters or numbers only</p>
+				</div>
+				<div class="form-group">
+					<label for="email">Email</label>
+					<input type="email" class="form-control" id="email" name="email" placeholder="Enter your email">
+					<p class="help-block">A valid email address</p>
+				</div>
+				<div class="form-group">
+					<label for="password">Password</label>
+					<input type="password" class="form-control" id="password" name="password" placeholder="Enter a password">
+					<p class="help-block">At least 6 characters</p>
+				</div>
+				<div class="form-group">
+					<label for="password_confirm">Confirm password</label>
+					<input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="Confirm your password">
+					<p class="help-block">Must match your password</p>
+				</div>
+				<div class="form-group">
+					<input type="submit" class="btn btn-default" value="Register">
+				</div>
+			</form>
+		</div>
+	</div><!-- .row -->
+</div><!-- .container -->
+
+
+
+
+user
+
+
+<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
+<div class="container">
+	<div class="row">
+		<div class="col-md-12">
+			<div class="page-header">
+				<h1>Login success!</h1>
+			</div>
+			<p>You are now logged in.</p>
+		</div>
+	</div><!-- .row -->
+</div><!-- .container -->
+
+
+
+
+user.php;
+
+
+<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
+<div class="container">
+	<div class="row">
+		<?php if (validation_errors()) : ?>
+			<div class="col-md-12">
+				<div class="alert alert-danger" role="alert">
+					<?= validation_errors() ?>
+				</div>
+			</div>
+		<?php endif; ?>
+		<?php if (isset($error)) : ?>
+			<div class="col-md-12">
+				<div class="alert alert-danger" role="alert">
+					<?= $error ?>
+				</div>
+			</div>
+		<?php endif; ?>
+		<div class="col-md-12">
+			<div class="page-header">
+				<h1>Login</h1>
+			</div>
+			<?= form_open() ?>
+				<div class="form-group">
+					<label for="username">Username</label>
+					<input type="text" class="form-control" id="username" name="username" placeholder="Your username">
+				</div>
+				<div class="form-group">
+					<label for="password">Password</label>
+					<input type="password" class="form-control" id="password" name="password" placeholder="Your password">
+				</div>
+				<div class="form-group">
+					<input type="submit" class="btn btn-default" value="Login">
+				</div>
+			</form>
+		</div>
+	</div><!-- .row -->
+</div><!-- .container -->
+
+
+
+
+
+
+auth
+
+
+
+
+<?php
+class Auth extends CI_Controller {
+    public function __construct() {
+        parent::__construct();
+        $this->load->model('User_model');
+        $this->load->library('session');
+        $this->load->helper('url');
+        $this->load->helper('form');
+        $this->load->library('form_validation');
+    }
+
+    public function login() {
+        $this->load->view('login_view');
+    }
+    
+
+    public function process_login() {
+        $email = $this->input->post('email');
+        $password = $this->input->post('password');
+
+        $user = $this->User_model->get_user_by_email($email);
+
+        if ($user && password_verify($password, $user['password'])) {
+            $this->session->set_userdata('user_id', $user['id']);
+            redirect('library');
+        } else {
+            $this->session->set_flashdata('error', 'Invalid email or password');
+            redirect('auth/login');
+        }
+    }
+
+    public function logout() {
+        $this->session->unset_userdata('user_id');
+        redirect('auth/login');
+    }
+
+    public function register() {
+        
+        $this->load->view('register_view');
+    }
+
+    public function process_register() {
+        
+       
+        $this->form_validation->set_rules('name', 'Name', 'required');
+        $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[users.email]');
+        $this->form_validation->set_rules('password', 'Password', 'required|min_length[6]');
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->session->set_flashdata('error', validation_errors());
+            $this->load->view('register_view');
+        } else {
+            $data = array(
+                'name' => $this->input->post('name'),
+                'email' => $this->input->post('email'),
+                'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT)
+            );
+
+            $this->User_model->register_user($data);
+            $this->session->set_flashdata('success', 'Registration successful! You can now login.');
+            redirect('auth/login');
+    }
+}
+}
+?>
+
+
+
+
+
+
+
+login_view.php
+
+    
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login to Library Management System</h2>
+    <form action="<?= site_url('auth/process_login') ?>" method="POST">
+        <label for="email">Email:</label>
+        <input type="email" name="email" required><br>
+        <label for="password">Password:</label>
+        <input type="password" name="password" required><br>
+        <button type="submit">Login</button>
+    </form>
+    <p><a href="<?= site_url( 'register') ?>">Don't have an account? Register here.</a></p>
+</body>
+</html>
+    
+ 
+
+reguster_view.php
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+</head>
+<body>
+    <h2>Register for Library Management System</h2>
+    <form action="<?= site_url('auth/process_register') ?>" method="POST">
+        <label for="name">Full Name:</label>
+        <input type="text" name="name" required><br>
+        <label for="email">Email:</label>
+        <input type="email" name="email" required><br>
+        <label for="password">Password:</label>
+        <input type="password" name="password" required><br>
+        <button type="submit">Register</button>
+    </form>
+    <p><a href="<?= site_url('main/login') ?>">Already have an account? Login here.</a></p>
+</body>
+</html>
